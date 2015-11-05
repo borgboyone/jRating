@@ -16,6 +16,7 @@
 			smallStarsPath : 'jquery/icons/small.png', // path of the icon small.png
 			phpPath : 'php/jRating.php', // path of the php file jRating.php
 			type : 'big', // can be set to 'small' or 'big'
+			infoText : ['awful', 'poor', 'ok', 'good', 'excellent'],
 
 			/** Boolean vars **/
 			step:false, // if true,  mouseover binded star by star,
@@ -27,7 +28,7 @@
 			/** Integer vars **/
 			length:5, // number of star to display
 			decimalLength : 0, // number of decimals.
-			rateMax : 20, // maximal rate - integer from 0 to 9999 (or more)
+			rateMax : 5, // maximal rate - integer from 0 to 9999 (or more)
 			rateInfosX : -45, // relative position in X axis of the info box when mouseover
 			rateInfosY : 5, // relative position in Y axis of the info box when mouseover
 			nbRates : 1,
@@ -58,8 +59,14 @@
 			getStarWidth();
 			$(this).height(starHeight);
 
-			var average = parseFloat($(this).attr('data-average')), // get the average of all rates
-			idBox = parseInt($(this).attr('data-id')), // get the id of the box
+			var average = parseFloat($(this).attr('data-average')); // get the average of all rates
+			var hasAverage = true;
+			if (isNaN(average)) {
+				average = 0;
+				hasAverage = false;
+			}
+
+			var idBox = parseInt($(this).attr('data-id')), // get the id of the box
 			widthRatingContainer = starWidth*opts.length, // Width of the Container
 			widthColor = average/opts.rateMax*widthRatingContainer, // Width of the color Container
 
@@ -68,7 +75,7 @@
 			{
 				'class' : 'jRatingColor',
 				css:{
-					width:widthColor
+					width:widthRatingContainer
 				}
 			}).appendTo($(this)),
 
@@ -77,7 +84,7 @@
 			{
 				'class' : 'jRatingAverage',
 				css:{
-					width:0,
+					width:widthColor,
 					top:- starHeight
 				}
 			}).appendTo($(this)),
@@ -89,13 +96,17 @@
 				css:{
 					width:widthRatingContainer,
 					height:starHeight,
-					top:- (starHeight*2),
-					background: 'url('+bgPath+') repeat-x'
+					top:- (starHeight*2)
 				}
 			}).appendTo($(this));
 
 
 			$(this).css({width: widthRatingContainer,overflow:'hidden',zIndex:1,position:'relative'});
+
+			if (hasAverage) {
+				hasRated = true;
+				globalWidth = widthColor;
+			}
 
 			if(!jDisabled)
 			$(this).unbind().bind({
@@ -106,7 +117,7 @@
 					var tooltip =
 					$('<p>',{
 						'class' : 'jRatingInfos',
-						html : getNote(relativeX)+' <span class="maxRate">/ '+opts.rateMax+'</span>',
+						html : opts.infoText[getNote(relativeX) - 1],
 						css : {
 							top: (e.pageY + opts.rateInfosY),
 							left: (e.pageX + opts.rateInfosX)
@@ -132,7 +143,7 @@
 					.css({
 						left: (e.pageX + opts.rateInfosX)
 					})
-					.html(getNote(newWidth) +' <span class="maxRate">/ '+opts.rateMax+'</span>');
+					.html(opts.infoText[getNote(newWidth) - 1]);
 				},
 				mouseleave : function(){
 					$("p.jRatingInfos").remove();
@@ -152,12 +163,6 @@
 					var rate = getNote(newWidth);
 					average.width(newWidth);
 
-
-					/** ONLY FOR THE DEMO, YOU CAN REMOVE THIS CODE **/
-						$('.datasSent p').html('<strong>idBox : </strong>'+idBox+'<br /><strong>rate : </strong>'+rate+'<br /><strong>action :</strong> rating');
-						$('.serverResponse p').html('<strong>Loading...</strong>');
-					/** END ONLY FOR THE DEMO **/
-
 					if(opts.onClick) opts.onClick( element, rate );
 
 					if(opts.sendRequest) {
@@ -169,26 +174,10 @@
 							function(data) {
 								if(!data.error)
 								{
-									/** ONLY FOR THE DEMO, YOU CAN REMOVE THIS CODE **/
-										$('.serverResponse p').html(data.server);
-									/** END ONLY FOR THE DEMO **/
-
-
-									/** Here you can display an alert box,
-										or use the jNotify Plugin :) http://www.myqjqueryplugins.com/jNotify
-										exemple :	*/
 									if(opts.onSuccess) opts.onSuccess( element, rate );
 								}
 								else
 								{
-
-									/** ONLY FOR THE DEMO, YOU CAN REMOVE THIS CODE **/
-										$('.serverResponse p').html(data.server);
-									/** END ONLY FOR THE DEMO **/
-
-									/** Here you can display an alert box,
-										or use the jNotify Plugin :) http://www.myqjqueryplugins.com/jNotify
-										exemple :	*/
 									if(opts.onError) opts.onError( element, rate );
 								}
 							},
